@@ -1,0 +1,17 @@
+# S3 API cho app, rclone, presigned URL
+s3.{$BASE_DOMAIN} {
+	reverse_proxy garage:3900
+}
+
+# File công khai: Garage chọn bucket theo Host, nên ghi đè Host về bucket công khai
+files.{$BASE_DOMAIN} {
+	header Access-Control-Allow-Origin "*"
+	reverse_proxy garage:3902 {
+		header_up Host {$PUBLIC_BUCKET}.web.garage.localhost
+	}
+}
+
+# Appwrite (backend cho web app) chạy trên máy host ở cổng 8080
+appwrite.{$BASE_DOMAIN} {
+	reverse_proxy host.docker.internal:8080
+}

@@ -1,0 +1,40 @@
+name: s3host
+
+services:
+  garage:
+    image: dxflrs/garage:v1.1.0
+    restart: unless-stopped
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN}
+    volumes:
+      - ./compose/garage/garage.toml:/etc/garage.toml:ro
+      - ./data/meta:/var/lib/garage/meta
+      - ./data/data:/var/lib/garage/data
+    # S3 API cũng mở trên localhost để app cùng máy gọi thẳng, không qua proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:3900:3900"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      BASE_DOMAIN: ${BASE_DOMAIN}
+      PUBLIC_BUCKET: ${PUBLIC_BUCKET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./compose/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - garage
+
+volumes:
+  caddy_data:
+  caddy_config:
